@@ -80,3 +80,52 @@ router.post("/", async (req, res, next) => {
         return next(err);
     }
 });
+
+// PUT /[code] => update company
+// {name, description} => {company: {code, name, description}}
+
+router.put("/:code", async (req, res, next) => {
+    try {
+        let {name, description} = req.body;
+        let code = req.params.code;
+
+        const result = await db.query(
+            `UPDATE companies
+            SET name=$1, description=$2
+            WHERE code = $3
+            RETURNING code, name, description`,
+            [name, description, code]);
+        if (results.rows.length === 0) {
+            throw new ExpressError(`No such company: ${code}`, 404)
+        } else {
+            return res.json({"company": results.rows[0]});
+        }
+    }
+
+    catch(err) {
+        return next(err);
+    }
+});
+
+// DELETE /[code] => delete company
+// => {status: "added"}
+
+router.delete("/:code", async (req, res, next) => {
+    try {
+        let code = req.params.code;
+
+        const result =  await db.query(
+            `DELETE FROM companies
+            WHERE code=$1
+            RETURNING code`, [code]);
+
+        if (result.rows.length === 0) {
+            throw new ExpressError(`No such company: ${code}`, 404)
+        } else {
+            return res.json({"status": "Deleted"});
+        }
+    }
+    catch(err) {
+        return next(err);
+    }
+});
