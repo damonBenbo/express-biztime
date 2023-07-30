@@ -60,3 +60,23 @@ router.get("/:code", async (req, res, next) => {
         return next(err);
     }
 });
+
+// POST / => add new company
+// {name, descrip} => {company: {code, name, descripo}}
+
+router.post("/", async (req, res, next) => {
+    try {
+        let {name, description} = req.body;
+        let code = slugify(name, {lower: true});
+
+        const result = await db.query(
+            `INSERT INTO companies (code, name, description)
+            VALUES ($1, $2, $3)
+            RETURNING code, name, description`, [code, name, description]);
+        return res.status(201).json({"company": results.rows[0]});
+    }
+
+    catch(err) {
+        return next(err);
+    }
+});
